@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – Campus Hub | University of Wolverhampton</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-circle">UW</div>
+      <h2>Campus Hub</h2>
+      <p>University of Wolverhampton</p>
+    </div>
+
+    <div id="alert-box"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary w-full btn-lg" id="btn-login">
+        Sign In
+      </button>
+    </form>
+
+    <hr class="divider">
+    <p class="text-center text-muted">
+      Don't have an account?
+      <a href="register.html">Register here</a>
+    </p>
+
+    <div class="mt-2" style="background:var(--light-bg);border-radius:8px;padding:0.75rem;font-size:0.8rem;color:var(--text-light);">
+      <strong>Demo credentials:</strong><br>
+      Admin: <code>admin</code> / <code>admin123</code>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  // Redirect if already logged in
+  if (Auth.isLoggedIn()) {
+    window.location.href = 'dashboard.html';
+  }
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-login');
+    const alertBox = document.getElementById('alert-box');
+    alertBox.innerHTML = '';
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+
+    try {
+      const data = await Http.post('/auth/login', {
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value
+      });
+
+      Auth.save(data);
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-danger">${err.message || 'Invalid credentials. Please try again.'}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+</script>
+</body>
+</html>

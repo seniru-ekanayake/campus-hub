@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div id="page-content" class="animate-in">
+
+    <div class="hero-banner" id="hero-banner">
+      <h1>Welcome back! 👋</h1>
+      <p>Stay connected with everything happening at the University of Wolverhampton.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card">
+        <div class="stat-number" id="stat-points">–</div>
+        <div class="stat-label">Engagement Points</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--info)">
+        <div class="stat-number" id="stat-clubs">–</div>
+        <div class="stat-label">My Clubs</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--success)">
+        <div class="stat-number" id="stat-checkins">–</div>
+        <div class="stat-label">Check-ins</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--navy)">
+        <div class="stat-number" id="stat-sessions">–</div>
+        <div class="stat-label">Sessions Booked</div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+
+      <!-- Announcements -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📢 Latest Announcements</h3>
+          <a href="announcements.html" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body" id="dash-announcements">
+          <div class="loading-overlay"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Upcoming Events -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📅 Upcoming Events</h3>
+          <a href="events.html" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body" id="dash-events">
+          <div class="loading-overlay"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card mt-2">
+      <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+          <a href="checkin.html" class="btn btn-primary">✓ Check In</a>
+          <a href="clubs.html" class="btn btn-navy">🎓 Browse Clubs</a>
+          <a href="transport.html" class="btn btn-outline">🚌 Transport Info</a>
+          <a href="mental-health.html" class="btn btn-outline">💚 Book Counseling</a>
+          <a href="facilities.html" class="btn btn-outline">🏛 Facilities</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error('Not logged in');
+  renderLayout('dashboard');
+
+  async function loadDashboard() {
+    const user = Auth.getUser();
+    if (user) {
+      document.getElementById('hero-banner').querySelector('h1').textContent =
+        `Welcome back, ${user.firstName || user.username}! 👋`;
+    }
+
+    // Load profile for points
+    try {
+      const profile = await Http.get('/auth/profile');
+      document.getElementById('stat-points').textContent = profile.engagementPoints || 0;
+    } catch {}
+
+    // My clubs count
+    try {
+      const clubs = await Http.get('/clubs/my');
+      document.getElementById('stat-clubs').textContent = clubs.length;
+    } catch {}
+
+    // My check-ins
+    try {
+      const checkins = await Http.get('/checkin/my');
+      document.getElementById('stat-checkins').textContent = checkins.length;
+    } catch {}
+
+    // My sessions
+    try {
+      const sessions = await Http.get('/counseling/sessions/my');
+      document.getElementById('stat-sessions').textContent = sessions.length;
+    } catch {}
+
+    // Announcements
+    const annEl = document.getElementById('dash-announcements');
+    try {
+      const ann = await Http.get('/announcements');
+      if (!ann.length) { Utils.empty(annEl, 'No announcements yet'); return; }
+      annEl.innerHTML = ann.slice(0, 4).map(a => `
+        <div class="announcement-item ${a.pinned ? 'pinned' : ''}">
+          ${a.pinned ? '<span class="badge badge-navy" style="float:right">Pinned</span>' : ''}
+          <h4>${Utils.escape(a.title)}</h4>
+          <p>${Utils.escape(a.content.substring(0, 100))}${a.content.length > 100 ? '…' : ''}</p>
+          <div class="meta">${Utils.timeAgo(a.createdAt)} &bull; ${a.category || ''}</div>
+        </div>`).join('');
+    } catch { annEl.innerHTML = '<p class="text-muted">Could not load announcements.</p>'; }
+
+    // Events
+    const evEl = document.getElementById('dash-events');
+    try {
+      const events = await Http.get('/events');
+      if (!events.length) { Utils.empty(evEl, 'No upcoming events'); return; }
+      evEl.innerHTML = events.slice(0, 4).map(ev => `
+        <div style="padding:0.75rem 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <strong>${Utils.escape(ev.title)}</strong>
+              <div class="text-muted">${Utils.formatDateTime(ev.eventDate)}</div>
+            </div>
+            ${ev.campus ? `<span class="badge badge-navy">${ev.campus}</span>` : ''}
+          </div>
+        </div>`).join('');
+    } catch { evEl.innerHTML = '<p class="text-muted">Could not load events.</p>'; }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

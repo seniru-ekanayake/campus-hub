@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register – Campus Hub | University of Wolverhampton</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width:520px">
+    <div class="auth-logo">
+      <div class="logo-circle">UW</div>
+      <h2>Create Account</h2>
+      <p>Join the University of Wolverhampton Campus Hub</p>
+    </div>
+
+    <div id="alert-box"></div>
+
+    <form id="register-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" class="form-control" placeholder="John" required>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" class="form-control" placeholder="Doe" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" class="form-control" placeholder="johndoe123" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="email">University Email</label>
+        <input type="email" id="email" class="form-control" placeholder="j.doe@wlv.ac.uk" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="studentId">Student ID</label>
+          <input type="text" id="studentId" class="form-control" placeholder="B1234567">
+        </div>
+        <div class="form-group">
+          <label for="course">Course</label>
+          <input type="text" id="course" class="form-control" placeholder="Computer Science">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6">
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full btn-lg" id="btn-register">
+        Create Account
+      </button>
+    </form>
+
+    <hr class="divider">
+    <p class="text-center text-muted">
+      Already have an account? <a href="login.html">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-register');
+    const alertBox = document.getElementById('alert-box');
+    alertBox.innerHTML = '';
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner"></div> Creating account...';
+
+    try {
+      await Http.post('/auth/register', {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        studentId: document.getElementById('studentId').value.trim(),
+        course: document.getElementById('course').value.trim(),
+        password: document.getElementById('password').value
+      });
+
+      alertBox.innerHTML = `<div class="alert alert-success">Account created successfully! Redirecting to login...</div>`;
+      setTimeout(() => window.location.href = 'login.html', 1800);
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  });
+</script>
+</body>
+</html>
