@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>📅 Campus Events</h1>
+        <p class="text-muted">Discover upcoming events at the University of Wolverhampton</p>
+      </div>
+      <div id="admin-controls" class="hidden">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Create Event</button>
+      </div>
+    </div>
+
+    <div class="card-grid" id="events-grid">
+      <div class="loading-overlay" style="grid-column:1/-1"><div class="loading-spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Create Event</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="event-id">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" id="ev-title" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="ev-desc" class="form-control"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campus</label>
+          <select id="ev-campus" class="form-control">
+            <option>City Campus</option>
+            <option>Walsall Campus</option>
+            <option>Telford Campus</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="ev-category" class="form-control" placeholder="e.g. Academic, Social">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="ev-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Capacity</label>
+          <input type="number" id="ev-capacity" class="form-control" value="50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="ev-location" class="form-control" placeholder="Room / Building">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('events');
+
+  let allEvents = [];
+  if (Auth.isAdmin()) document.getElementById('admin-controls').classList.remove('hidden');
+
+  async function loadEvents() {
+    const grid = document.getElementById('events-grid');
+    Utils.loading(grid);
+    try {
+      allEvents = await Http.get('/events');
+    } catch { grid.innerHTML = '<p class="text-muted">Could not load events.</p>'; return; }
+
+    if (!allEvents.length) { Utils.empty(grid, 'No upcoming events.', '📅'); return; }
+
+    grid.innerHTML = allEvents.map(ev => `
+      <div class="event-card">
+        <div class="card-img">📅</div>
+        <div class="card-content">
+          <h3>${Utils.escape(ev.title)}</h3>
+          <p>${Utils.escape(ev.description || '')}</p>
+          <p>📍 ${Utils.escape(ev.location || '')} &bull; ${Utils.escape(ev.campus || '')}</p>
+          <p>🗓 ${Utils.formatDateTime(ev.eventDate)}</p>
+          ${ev.capacity ? `<p>👥 Capacity: ${ev.capacity}</p>` : ''}
+          <div class="card-meta">
+            ${ev.category ? `<span class="badge badge-info">${ev.category}</span>` : ''}
+            ${Auth.isAdmin() ? `
+              <button class="btn btn-sm btn-outline" onclick="editEvent(${ev.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteEvent(${ev.id})">Delete</button>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Create Event';
+    document.getElementById('event-id').value = '';
+    ['ev-title','ev-desc','ev-category','ev-location'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ev-capacity').value = 50;
+    document.getElementById('ev-date').value = '';
+    document.getElementById('event-modal').classList.remove('hidden');
+  }
+
+  function editEvent(id) {
+    const ev = allEvents.find(x => x.id === id);
+    if (!ev) return;
+    document.getElementById('modal-title').textContent = 'Edit Event';
+    document.getElementById('event-id').value = ev.id;
+    document.getElementById('ev-title').value = ev.title || '';
+    document.getElementById('ev-desc').value = ev.description || '';
+    document.getElementById('ev-campus').value = ev.campus || 'City Campus';
+    document.getElementById('ev-category').value = ev.category || '';
+    document.getElementById('ev-capacity').value = ev.capacity || 50;
+    document.getElementById('ev-location').value = ev.location || '';
+    if (ev.eventDate) {
+      document.getElementById('ev-date').value = new Date(ev.eventDate).toISOString().slice(0, 16);
+    }
+    document.getElementById('event-modal').classList.remove('hidden');
+  }
+
+  function closeModal() { document.getElementById('event-modal').classList.add('hidden'); }
+
+  async function saveEvent() {
+    const id = document.getElementById('event-id').value;
+    const body = {
+      title: document.getElementById('ev-title').value,
+      description: document.getElementById('ev-desc').value,
+      campus: document.getElementById('ev-campus').value,
+      category: document.getElementById('ev-category').value,
+      capacity: parseInt(document.getElementById('ev-capacity').value),
+      location: document.getElementById('ev-location').value,
+      eventDate: document.getElementById('ev-date').value || null
+    };
+    try {
+      if (id) { await Http.put('/admin/events/' + id, body); Toast.success('Event updated.'); }
+      else { await Http.post('/admin/events', body); Toast.success('Event created.'); }
+      closeModal(); loadEvents();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteEvent(id) {
+    if (!confirm('Delete this event?')) return;
+    try { await Http.delete('/admin/events/' + id); Toast.success('Deleted.'); loadEvents(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  loadEvents();
+</script>
+</body>
+</html>

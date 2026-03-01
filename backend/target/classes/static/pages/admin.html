@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <h1>⚙ Admin Panel</h1>
+      <p class="text-muted">University of Wolverhampton – Campus Hub Administration</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-grid mb-2" id="admin-stats">
+      <div class="stat-card"><div class="stat-number">–</div><div class="stat-label">Total Students</div></div>
+      <div class="stat-card" style="border-color:var(--info)"><div class="stat-number">–</div><div class="stat-label">Total Clubs</div></div>
+      <div class="stat-card" style="border-color:var(--success)"><div class="stat-number">–</div><div class="stat-label">Total Events</div></div>
+      <div class="stat-card" style="border-color:var(--warning)"><div class="stat-number">–</div><div class="stat-label">Check-ins</div></div>
+      <div class="stat-card" style="border-color:var(--navy)"><div class="stat-number">–</div><div class="stat-label">Sessions</div></div>
+    </div>
+
+    <!-- Quick admin nav -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem">
+      <a href="facilities.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">🏛</span>
+        <div><strong>Facilities</strong><br><span class="text-muted" style="font-size:0.8rem">Manage campus facilities</span></div>
+      </a>
+      <a href="events.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">📅</span>
+        <div><strong>Events</strong><br><span class="text-muted" style="font-size:0.8rem">Create & manage events</span></div>
+      </a>
+      <a href="announcements.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">📢</span>
+        <div><strong>Announcements</strong><br><span class="text-muted" style="font-size:0.8rem">Post university news</span></div>
+      </a>
+      <a href="clubs.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">🎓</span>
+        <div><strong>Clubs</strong><br><span class="text-muted" style="font-size:0.8rem">Manage student clubs</span></div>
+      </a>
+      <a href="transport.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">🚌</span>
+        <div><strong>Transport</strong><br><span class="text-muted" style="font-size:0.8rem">Shuttle schedules</span></div>
+      </a>
+      <a href="checkin.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">⭐</span>
+        <div><strong>Rewards</strong><br><span class="text-muted" style="font-size:0.8rem">Manage reward catalogue</span></div>
+      </a>
+      <a href="mental-health.html" class="card" style="text-decoration:none;padding:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span style="font-size:1.5rem">💚</span>
+        <div><strong>Wellbeing</strong><br><span class="text-muted" style="font-size:0.8rem">Counselors & sessions</span></div>
+      </a>
+    </div>
+
+    <!-- Users table -->
+    <div class="card">
+      <div class="card-header"><h3>👥 Registered Users</h3></div>
+      <div class="card-body" id="users-container">
+        <div class="loading-overlay"><div class="loading-spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Engagement report -->
+    <div class="card mt-2">
+      <div class="card-header"><h3>📊 Recent Check-ins</h3></div>
+      <div class="card-body" id="checkins-container">
+        <div class="loading-overlay"><div class="loading-spinner"></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireAdmin()) throw new Error();
+  renderLayout('admin');
+
+  async function loadStats() {
+    try {
+      const stats = await Http.get('/admin/stats');
+      const cards = document.querySelectorAll('#admin-stats .stat-card .stat-number');
+      cards[0].textContent = stats.totalStudents;
+      cards[1].textContent = stats.totalClubs;
+      cards[2].textContent = stats.totalEvents;
+      cards[3].textContent = stats.totalCheckIns;
+      cards[4].textContent = stats.totalSessions;
+    } catch {}
+  }
+
+  async function loadUsers() {
+    const cont = document.getElementById('users-container');
+    try {
+      const users = await Http.get('/admin/users');
+      if (!users.length) { Utils.empty(cont, 'No users.'); return; }
+      cont.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Points</th><th>Course</th><th>Joined</th><th>Action</th></tr></thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td><strong>${Utils.escape(u.username)}</strong></td>
+                  <td>${Utils.escape((u.firstName||'') + ' ' + (u.lastName||''))}</td>
+                  <td>${Utils.escape(u.email)}</td>
+                  <td><span class="badge ${u.role === 'ROLE_ADMIN' ? 'badge-warning' : 'badge-navy'}">${u.role === 'ROLE_ADMIN' ? 'Admin' : 'Student'}</span></td>
+                  <td>${u.engagementPoints}</td>
+                  <td>${Utils.escape(u.course || '–')}</td>
+                  <td>${Utils.formatDate(u.createdAt)}</td>
+                  <td>${u.role !== 'ROLE_ADMIN' ? `<button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id}, '${Utils.escape(u.username)}')">Delete</button>` : '–'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch { cont.innerHTML = '<p class="text-muted">Could not load users.</p>'; }
+  }
+
+  async function loadCheckIns() {
+    const cont = document.getElementById('checkins-container');
+    try {
+      const items = await Http.get('/admin/checkins');
+      if (!items.length) { Utils.empty(cont, 'No check-ins.'); return; }
+      const recent = items.slice(0, 20);
+      cont.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Student</th><th>Location</th><th>Type</th><th>Points</th><th>Time</th></tr></thead>
+            <tbody>
+              ${recent.map(c => `
+                <tr>
+                  <td>${Utils.escape(c.username)}</td>
+                  <td>${Utils.escape(c.locationName)}</td>
+                  <td><span class="badge badge-navy">${c.locationType}</span></td>
+                  <td><span class="badge badge-gold">+${c.pointsAwarded}</span></td>
+                  <td>${Utils.formatDateTime(c.checkInTime)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch { cont.innerHTML = '<p class="text-muted">Could not load check-ins.</p>'; }
+  }
+
+  async function deleteUser(id, username) {
+    if (!confirm(`Delete user "${username}"? This cannot be undone.`)) return;
+    try { await Http.delete('/admin/users/' + id); Toast.success('User deleted.'); loadUsers(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  loadStats();
+  loadUsers();
+  loadCheckIns();
+</script>
+</body>
+</html>

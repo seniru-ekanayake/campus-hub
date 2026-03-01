@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Campus Hub – University of Wolverhampton</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@300;400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .landing-page {
+      min-height: 100vh; background: var(--navy);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem; position: relative; overflow: hidden;
+    }
+    .landing-page::before {
+      content:''; position:absolute; right:-80px; top:-80px;
+      width:500px;height:500px;
+      background:var(--yellow);
+      clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+      opacity:0.06; animation:spinDiamond 25s linear infinite;
+    }
+    .landing-page::after {
+      content:''; position:absolute; left:-60px; bottom:-60px;
+      width:350px;height:350px;
+      background:var(--cyan);
+      clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+      opacity:0.06; animation:spinDiamond 35s linear infinite reverse;
+    }
+    .landing-inner { text-align:center; position:relative; z-index:1; animation:cardIn .7s var(--ease) both; }
+    .landing-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid rgba(250,200,23,.30); color:var(--yellow);
+      padding:8px 18px; border-radius:100px;
+      font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+      margin-bottom:28px;
+    }
+    .landing-badge .dot { width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:pulse 2s infinite; }
+    .landing-logo {
+      width:80px;height:96px; margin:0 auto 24px;
+    }
+    .landing-title { font-family:'Roboto Slab',serif; font-size:3.5rem; font-weight:700; color:var(--white); margin-bottom:8px; }
+    .landing-title span { color:var(--yellow); }
+    .landing-sub { font-size:16px; color:rgba(255,255,255,.60); margin-bottom:36px; max-width:480px; line-height:1.7; }
+    .landing-actions { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+    .landing-stats {
+      display:flex; gap:36px; margin-top:48px;
+      padding-top:32px; border-top:1px solid rgba(255,255,255,.10);
+      justify-content:center;
+    }
+    .landing-stat { text-align:center; }
+    .landing-stat-val { font-family:'Roboto Slab',serif; font-size:24px; font-weight:700; color:var(--white); }
+    .landing-stat-lbl { font-size:11px; color:rgba(255,255,255,.40); margin-top:3px; }
+  </style>
+</head>
+<body>
+<div class="landing-page">
+  <div class="landing-inner">
+    <div class="landing-badge"><div class="dot"></div>The University of Opportunity</div>
+    <svg class="landing-logo" viewBox="0 0 36 44" fill="none">
+      <path d="M0 0 H36 V38 L18 28 L0 38 Z" fill="rgba(255,255,255,0.10)"/>
+      <path d="M0 0 H36 V38 L18 28 L0 38 Z" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5"/>
+      <polygon points="18,4 30,16 18,16" fill="#A8D846" opacity="0.9"/>
+      <polygon points="18,4 6,16 18,16" fill="#F5357F" opacity="0.9"/>
+      <polygon points="18,16 30,16 18,28" fill="#FAC817" opacity="0.9"/>
+      <polygon points="18,16 6,16 18,28" fill="#4DBDD7" opacity="0.9"/>
+    </svg>
+    <h1 class="landing-title">Campus <span>Hub</span></h1>
+    <p class="landing-sub">University of Wolverhampton's central platform for student services, events, clubs, facilities and wellbeing support.</p>
+    <div class="landing-actions">
+      <a href="pages/login.html" class="btn btn-primary btn-lg" style="font-family:'Roboto Slab',serif">Sign In</a>
+      <a href="pages/register.html" class="btn btn-ghost btn-lg" style="font-family:'Roboto Slab',serif">Register →</a>
+    </div>
+    <div class="landing-stats">
+      <div class="landing-stat"><div class="landing-stat-val">23,000+</div><div class="landing-stat-lbl">Students</div></div>
+      <div class="landing-stat"><div class="landing-stat-val">50+</div><div class="landing-stat-lbl">Clubs</div></div>
+      <div class="landing-stat"><div class="landing-stat-val">3</div><div class="landing-stat-lbl">Campuses</div></div>
+    </div>
+  </div>
+</div>
+<script src="js/app.js"></script>
+<script>
+  if (Auth.isLoggedIn()) window.location.href = 'pages/dashboard.html';
+</script>
+</body>
+</html>

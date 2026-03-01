@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-In & Rewards – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <h1>⭐ Check-In & Rewards</h1>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem;margin-bottom:1.5rem" class="points-layout">
+      <div class="points-display">
+        <div style="font-size:0.9rem;font-weight:700;margin-bottom:0.5rem">MY ENGAGEMENT POINTS</div>
+        <div class="points-number" id="total-points">–</div>
+        <div style="font-size:0.85rem;margin-top:0.5rem">points earned</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>🏆 Check In Now</h3></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Location Name</label>
+              <input type="text" id="checkin-location" class="form-control" placeholder="e.g. Harrison Library">
+            </div>
+            <div class="form-group">
+              <label>Location Type</label>
+              <select id="checkin-type" class="form-control">
+                <option value="LIBRARY">📚 Library (+10 pts)</option>
+                <option value="CLUB_MEETING">🎓 Club Meeting (+15 pts)</option>
+                <option value="EVENT_VENUE">📅 Event Venue (+20 pts)</option>
+                <option value="STUDY_SPACE">📖 Study Space (+5 pts)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg" onclick="doCheckIn()">✓ Check In</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('history', this)">My Check-in History</button>
+      <button class="tab-btn" onclick="switchTab('rewards', this)">Available Rewards</button>
+    </div>
+
+    <div id="tab-history">
+      <div id="checkin-list"></div>
+    </div>
+    <div id="tab-rewards" class="hidden">
+      <div class="card-grid" id="rewards-grid"></div>
+    </div>
+  </div>
+</main>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('checkin');
+
+  async function loadProfile() {
+    try {
+      const profile = await Http.get('/auth/profile');
+      document.getElementById('total-points').textContent = profile.engagementPoints || 0;
+    } catch {}
+  }
+
+  async function loadCheckIns() {
+    const list = document.getElementById('checkin-list');
+    Utils.loading(list);
+    try {
+      const items = await Http.get('/checkin/my');
+      if (!items.length) { Utils.empty(list, 'No check-ins yet. Start earning points!', '📍'); return; }
+
+      list.innerHTML = `
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Location</th><th>Type</th><th>Points</th><th>Date</th></tr></thead>
+              <tbody>
+                ${items.map(c => `
+                  <tr>
+                    <td>${Utils.escape(c.locationName)}</td>
+                    <td><span class="badge badge-navy">${c.locationType}</span></td>
+                    <td><span class="badge badge-gold">+${c.pointsAwarded} pts</span></td>
+                    <td>${Utils.formatDateTime(c.checkInTime)}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    } catch { list.innerHTML = '<p class="text-muted">Could not load history.</p>'; }
+  }
+
+  async function loadRewards() {
+    const grid = document.getElementById('rewards-grid');
+    Utils.loading(grid);
+    try {
+      const rewards = await Http.get('/rewards');
+      if (!rewards.length) { Utils.empty(grid, 'No rewards available yet.', '🎁'); return; }
+      grid.innerHTML = rewards.map(r => `
+        <div class="card">
+          <div class="card-content" style="padding:1.25rem">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🎁</div>
+            <h3>${Utils.escape(r.name)}</h3>
+            <p class="text-muted">${Utils.escape(r.description || '')}</p>
+            <div class="card-meta mt-1">
+              <span class="badge badge-gold">${r.pointsRequired} pts required</span>
+              ${r.availableQuantity > 0 ? `<span class="badge badge-success">${r.availableQuantity} left</span>` : '<span class="badge badge-danger">Out of stock</span>'}
+            </div>
+          </div>
+        </div>`).join('');
+    } catch { grid.innerHTML = '<p class="text-muted">Could not load rewards.</p>'; }
+  }
+
+  async function doCheckIn() {
+    const location = document.getElementById('checkin-location').value.trim();
+    const type = document.getElementById('checkin-type').value;
+    if (!location) { Toast.error('Please enter a location name.'); return; }
+
+    try {
+      const result = await Http.post('/checkin', { locationName: location, locationType: type });
+      Toast.success(`Checked in! +${result.pointsAwarded} points earned.`);
+      document.getElementById('checkin-location').value = '';
+      loadProfile();
+      loadCheckIns();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+    document.getElementById('tab-rewards').classList.toggle('hidden', tab !== 'rewards');
+    if (tab === 'rewards') loadRewards();
+  }
+
+  // Responsive fix for points layout
+  if (window.innerWidth < 600) {
+    document.querySelector('.points-layout').style.gridTemplateColumns = '1fr';
+  }
+
+  loadProfile();
+  loadCheckIns();
+</script>
+</body>
+</html>

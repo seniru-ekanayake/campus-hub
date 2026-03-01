@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Club Hub – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>🎓 Club Hub</h1>
+        <p class="text-muted">Discover and join student clubs and societies</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="loadMyClubs()">My Clubs</button>
+        <button class="btn btn-outline" onclick="loadAllClubs()">All Clubs</button>
+        <div id="admin-controls" class="hidden">
+          <button class="btn btn-primary" onclick="openAddModal()">+ Create Club</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-grid" id="clubs-grid">
+      <div class="loading-overlay" style="grid-column:1/-1"><div class="loading-spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Club Modal -->
+<div class="modal-overlay hidden" id="club-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Create Club</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="club-id">
+      <div class="form-group">
+        <label>Club Name *</label>
+        <input type="text" id="cl-name" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="cl-desc" class="form-control"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="cl-cat" class="form-control" placeholder="Technology, Sports, Arts...">
+        </div>
+        <div class="form-group">
+          <label>Contact Email</label>
+          <input type="email" id="cl-email" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Meeting Schedule</label>
+          <input type="text" id="cl-schedule" class="form-control" placeholder="Wednesdays 6pm">
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="cl-location" class="form-control" placeholder="Room MX123">
+        </div>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="cl-active" checked style="margin-right:0.4rem"> Active</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClub()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('clubs');
+  if (Auth.isAdmin()) document.getElementById('admin-controls').classList.remove('hidden');
+
+  let allClubs = [];
+  let viewMode = 'all';
+
+  async function loadAllClubs() {
+    viewMode = 'all';
+    const grid = document.getElementById('clubs-grid');
+    Utils.loading(grid);
+    try {
+      allClubs = await Http.get('/clubs');
+      renderClubs(allClubs);
+    } catch { grid.innerHTML = '<p class="text-muted">Could not load clubs.</p>'; }
+  }
+
+  async function loadMyClubs() {
+    viewMode = 'my';
+    const grid = document.getElementById('clubs-grid');
+    Utils.loading(grid);
+    try {
+      allClubs = await Http.get('/clubs/my');
+      if (!allClubs.length) { Utils.empty(grid, "You haven't joined any clubs yet.", '🎓'); return; }
+      renderClubs(allClubs);
+    } catch { grid.innerHTML = '<p class="text-muted">Could not load clubs.</p>'; }
+  }
+
+  function renderClubs(clubs) {
+    const grid = document.getElementById('clubs-grid');
+    if (!clubs.length) { Utils.empty(grid, 'No clubs found.', '🎓'); return; }
+
+    grid.innerHTML = clubs.map(c => `
+      <div class="club-card">
+        <div class="card-img">🎓</div>
+        <div class="card-content">
+          <h3>${Utils.escape(c.name)}</h3>
+          <p>${Utils.escape(c.description || '')}</p>
+          ${c.category ? `<span class="badge badge-navy">${c.category}</span>` : ''}
+          ${c.meetingSchedule ? `<p style="margin-top:0.5rem">📅 ${Utils.escape(c.meetingSchedule)}</p>` : ''}
+          ${c.location ? `<p>📍 ${Utils.escape(c.location)}</p>` : ''}
+          <p class="text-muted" style="font-size:0.8rem">👥 ${c.memberCount || 0} members</p>
+          <div class="card-meta">
+            ${c.member
+              ? `<button class="btn btn-sm btn-danger" onclick="leaveClub(${c.id})">Leave Club</button>`
+              : `<button class="btn btn-sm btn-success" onclick="joinClub(${c.id})">Join Club</button>`
+            }
+            ${Auth.isAdmin() ? `
+              <button class="btn btn-sm btn-outline" onclick="editClub(${c.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteClub(${c.id})">Delete</button>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  async function joinClub(id) {
+    try {
+      await Http.post('/clubs/' + id + '/join', {});
+      Toast.success('Joined club!');
+      loadAllClubs();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function leaveClub(id) {
+    if (!confirm('Leave this club?')) return;
+    try {
+      await Http.delete('/clubs/' + id + '/leave');
+      Toast.success('Left club.');
+      if (viewMode === 'my') loadMyClubs(); else loadAllClubs();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Create Club';
+    document.getElementById('club-id').value = '';
+    ['cl-name','cl-desc','cl-cat','cl-email','cl-schedule','cl-location'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cl-active').checked = true;
+    document.getElementById('club-modal').classList.remove('hidden');
+  }
+
+  function editClub(id) {
+    const c = allClubs.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('modal-title').textContent = 'Edit Club';
+    document.getElementById('club-id').value = c.id;
+    document.getElementById('cl-name').value = c.name || '';
+    document.getElementById('cl-desc').value = c.description || '';
+    document.getElementById('cl-cat').value = c.category || '';
+    document.getElementById('cl-email').value = c.contactEmail || '';
+    document.getElementById('cl-schedule').value = c.meetingSchedule || '';
+    document.getElementById('cl-location').value = c.location || '';
+    document.getElementById('cl-active').checked = c.active;
+    document.getElementById('club-modal').classList.remove('hidden');
+  }
+
+  function closeModal() { document.getElementById('club-modal').classList.add('hidden'); }
+
+  async function saveClub() {
+    const id = document.getElementById('club-id').value;
+    const body = {
+      name: document.getElementById('cl-name').value,
+      description: document.getElementById('cl-desc').value,
+      category: document.getElementById('cl-cat').value,
+      contactEmail: document.getElementById('cl-email').value,
+      meetingSchedule: document.getElementById('cl-schedule').value,
+      location: document.getElementById('cl-location').value,
+      active: document.getElementById('cl-active').checked
+    };
+    try {
+      if (id) { await Http.put('/admin/clubs/' + id, body); Toast.success('Club updated.'); }
+      else { await Http.post('/admin/clubs', body); Toast.success('Club created.'); }
+      closeModal(); loadAllClubs();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteClub(id) {
+    if (!confirm('Delete this club?')) return;
+    try { await Http.delete('/admin/clubs/' + id); Toast.success('Deleted.'); loadAllClubs(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  loadAllClubs();
+</script>
+</body>
+</html>

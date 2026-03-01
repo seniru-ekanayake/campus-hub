@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In – Campus Hub | University of Wolverhampton</title>
+  <meta name="description" content="Sign in to Campus Hub, your University of Wolverhampton student portal."/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* Auth-page scoped floating label fix */
+    .auth-float { position: relative; margin-bottom: 18px; }
+    .auth-float input {
+      width: 100%; height: 52px;
+      padding: 20px 14px 8px 42px;
+      border: 1.5px solid rgba(77,81,104,0.15);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.85);
+      font-size: 13.5px; font-family: 'Roboto', sans-serif;
+      color: var(--navy); outline: none;
+      transition: all 0.25s var(--ease);
+    }
+    .auth-float input:focus {
+      border-color: var(--cyan);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(77,189,215,0.12);
+    }
+    .auth-float label {
+      position: absolute;
+      left: 42px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13.5px; color: var(--muted);
+      pointer-events: none; font-weight: 400;
+      transition: all 0.25s var(--ease);
+      white-space: nowrap;
+    }
+    .auth-float input:focus ~ label,
+    .auth-float input:not(:placeholder-shown) ~ label {
+      top: 14px; transform: translateY(0);
+      font-size: 10px; font-weight: 700;
+      color: var(--cyan); letter-spacing: .06em;
+      text-transform: uppercase; left: 14px;
+    }
+    .auth-float .field-icon {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: #9aa3b8; width: 16px; height: 16px;
+      pointer-events: none;
+    }
+    .auth-float .pass-toggle {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); display: flex; align-items: center;
+      padding: 4px; border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .auth-float .pass-toggle:hover { color: var(--navy); }
+    .auth-float input.is-invalid { border-color: var(--pink); }
+    .field-error {
+      font-size: 11px; color: #a5004e; font-weight: 500;
+      margin-top: 4px; display: none; align-items: center; gap: 4px;
+    }
+    .field-error.visible { display: flex; }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Left decorative panel -->
+  <div class="left-panel">
+    <div class="bookmark-bg" aria-hidden="true">
+      <div class="bm-shape bm-1"></div>
+      <div class="bm-shape bm-2"></div>
+      <div class="bm-shape bm-3"></div>
+      <div class="bm-shape bm-4"></div>
+    </div>
+    <div class="left-brand">
+      <svg width="32" height="40" viewBox="0 0 36 44" fill="none" aria-hidden="true">
+        <path d="M0 0 H36 V38 L18 28 L0 38 Z" fill="rgba(255,255,255,0.10)"/>
+        <path d="M0 0 H36 V38 L18 28 L0 38 Z" fill="none" stroke="rgba(255,255,255,0.20)" stroke-width="1.5"/>
+        <polygon points="18,4 30,16 18,16" fill="#A8D846" opacity="0.9"/>
+        <polygon points="18,4 6,16 18,16" fill="#F5357F" opacity="0.9"/>
+        <polygon points="18,16 30,16 18,28" fill="#FAC817" opacity="0.9"/>
+        <polygon points="18,16 6,16 18,28" fill="#4DBDD7" opacity="0.9"/>
+      </svg>
+      <div>
+        <div style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.50);">University of</div>
+        <div style="font-size:16px;font-weight:800;color:#fff;">Wolverhampton</div>
+      </div>
+    </div>
+    <div class="left-content">
+      <div class="strapline-badge"><div class="dot" aria-hidden="true"></div>The University of Opportunity</div>
+      <blockquote>Your campus.<br><span>Your hub.</span><br>All in one place.</blockquote>
+      <p>Access events, clubs, facilities, transport and wellbeing support — everything you need, right at your fingertips.</p>
+    </div>
+    <div class="left-footer" role="list" aria-label="Campus statistics">
+      <div class="left-stat" role="listitem"><div class="left-stat-val">23k+</div><div class="left-stat-lbl">Students</div></div>
+      <div class="left-divider" aria-hidden="true"></div>
+      <div class="left-stat" role="listitem"><div class="left-stat-val">50+</div><div class="left-stat-lbl">Clubs &amp; Societies</div></div>
+      <div class="left-divider" aria-hidden="true"></div>
+      <div class="left-stat" role="listitem"><div class="left-stat-val">3</div><div class="left-stat-lbl">Campuses</div></div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="right-panel">
+    <div class="form-container">
+      <div class="form-header">
+        <h1>Welcome back</h1>
+        <p>Sign in with your University of Wolverhampton credentials.</p>
+      </div>
+      <div class="form-card" style="position:relative">
+        <div class="diamond-accent top-left" aria-hidden="true"></div>
+        <div class="diamond-accent top-right" aria-hidden="true"></div>
+
+        <div id="alert-box" role="alert" aria-live="polite"></div>
+
+        <form id="login-form" novalidate>
+
+          <!-- Username -->
+          <div class="auth-float">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="username" name="username" placeholder=" " required autocomplete="username" aria-required="true" aria-describedby="username-error"/>
+            <label for="username">Student ID or Username</label>
+          </div>
+          <div class="field-error" id="username-error" role="alert">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Please enter your student ID or username
+          </div>
+
+          <!-- Password -->
+          <div class="auth-float" style="margin-top:4px">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="password" name="password" placeholder=" " required autocomplete="current-password" aria-required="true" aria-describedby="password-error" style="padding-right:42px"/>
+            <label for="password">Password</label>
+            <button type="button" class="pass-toggle" id="pass-toggle" aria-label="Show password">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div class="field-error" id="password-error" role="alert">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Please enter your password
+          </div>
+
+          <div class="form-row-inline" style="margin-top:16px">
+            <label class="checkbox-label">
+              <input type="checkbox" id="remember-me"> Remember me
+            </label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btn-login" style="margin-top:20px">
+            Sign In to Campus Hub
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,18 15,12 9,6"/></svg>
+          </button>
+        </form>
+
+        <div class="divider-text">or</div>
+        <button type="button" class="sso-btn" aria-label="Sign in with University Single Sign-On">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          University Single Sign-On (SSO)
+        </button>
+
+        <div style="margin-top:14px;background:rgba(250,200,23,.07);border:1px solid rgba(250,200,23,.20);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--muted);">
+          <strong style="color:var(--navy)">Demo credentials:</strong>&nbsp;
+          Admin: <code style="background:rgba(26,39,68,.06);padding:1px 5px;border-radius:4px">admin</code> / <code style="background:rgba(26,39,68,.06);padding:1px 5px;border-radius:4px">admin123</code>
+        </div>
+
+        <div class="register-link">New student? <a href="register.html">Create your account</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+  // Password show/hide
+  const passInput = document.getElementById('password');
+  const passToggle = document.getElementById('pass-toggle');
+  let passVisible = false;
+  passToggle.addEventListener('click', () => {
+    passVisible = !passVisible;
+    passInput.type = passVisible ? 'text' : 'password';
+    passToggle.setAttribute('aria-label', passVisible ? 'Hide password' : 'Show password');
+    passToggle.innerHTML = passVisible
+      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  });
+
+  // Validation helpers
+  function showError(fieldId, errorId) {
+    document.getElementById(fieldId).classList.add('is-invalid');
+    document.getElementById(errorId).classList.add('visible');
+  }
+  function clearError(fieldId, errorId) {
+    document.getElementById(fieldId).classList.remove('is-invalid');
+    document.getElementById(errorId).classList.remove('visible');
+  }
+
+  // Real-time clear on input
+  document.getElementById('username').addEventListener('input', () => clearError('username', 'username-error'));
+  document.getElementById('password').addEventListener('input', () => clearError('password', 'password-error'));
+
+  // Form submit
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const usernameVal = document.getElementById('username').value.trim();
+    const passwordVal = document.getElementById('password').value;
+    let valid = true;
+
+    if (!usernameVal) { showError('username', 'username-error'); valid = false; }
+    if (!passwordVal) { showError('password', 'password-error'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('btn-login');
+    const alertBox = document.getElementById('alert-box');
+    alertBox.innerHTML = '';
+    btn.disabled = true;
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin .7s linear infinite" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/></svg> Signing in…`;
+
+    try {
+      const data = await Http.post('/auth/login', { username: usernameVal, password: passwordVal });
+      Auth.save(data);
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      alertBox.innerHTML = `
+        <div class="alert alert-danger" role="alert" style="margin-bottom:16px">
+          <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          ${err.message || 'Invalid credentials. Please check and try again.'}
+        </div>`;
+      btn.disabled = false;
+      btn.innerHTML = `Sign In to Campus Hub <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,18 15,12 9,6"/></svg>`;
+    }
+  });
+</script>
+</body>
+</html>
