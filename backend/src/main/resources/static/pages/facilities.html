@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facilities – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>🏛 Campus Facilities</h1>
+        <p class="text-muted">View facility locations, opening times and current status</p>
+      </div>
+      <div id="admin-controls" class="hidden">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Facility</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-2">
+      <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+        <select id="filter-campus" class="form-control" style="max-width:200px">
+          <option value="">All Campuses</option>
+          <option value="City Campus">City Campus</option>
+          <option value="Walsall Campus">Walsall Campus</option>
+          <option value="Telford Campus">Telford Campus</option>
+        </select>
+        <select id="filter-status" class="form-control" style="max-width:200px">
+          <option value="">All Statuses</option>
+          <option value="OPEN">Open</option>
+          <option value="CLOSED">Closed</option>
+          <option value="BUSY">Busy</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="loadFacilities()">🔍 Filter</button>
+      </div>
+    </div>
+
+    <div class="card-grid" id="facilities-grid">
+      <div class="loading-overlay" style="grid-column:1/-1"><div class="loading-spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay hidden" id="facility-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Add Facility</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="facility-id">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="fac-name" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="fac-desc" class="form-control"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campus</label>
+          <select id="fac-campus" class="form-control">
+            <option>City Campus</option>
+            <option>Walsall Campus</option>
+            <option>Telford Campus</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="fac-status" class="form-control">
+            <option value="OPEN">Open</option>
+            <option value="CLOSED">Closed</option>
+            <option value="BUSY">Busy</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="fac-location" class="form-control" placeholder="e.g. Building MX, Floor 2">
+      </div>
+      <div class="form-group">
+        <label>Opening Times</label>
+        <input type="text" id="fac-times" class="form-control" placeholder="e.g. Mon-Fri 8am-10pm">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFacility()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('facilities');
+
+  let allFacilities = [];
+
+  if (Auth.isAdmin()) document.getElementById('admin-controls').classList.remove('hidden');
+
+  async function loadFacilities() {
+    const grid = document.getElementById('facilities-grid');
+    Utils.loading(grid);
+
+    try {
+      allFacilities = await Http.get('/facilities');
+    } catch {
+      grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1">Failed to load facilities.</p>';
+      return;
+    }
+
+    const campus = document.getElementById('filter-campus').value;
+    const status = document.getElementById('filter-status').value;
+    let filtered = allFacilities;
+    if (campus) filtered = filtered.filter(f => f.campus === campus);
+    if (status) filtered = filtered.filter(f => f.status === status);
+
+    if (!filtered.length) { Utils.empty(grid, 'No facilities found.', '🏛'); return; }
+
+    const statusDot = { OPEN: 'status-open', CLOSED: 'status-closed', BUSY: 'status-busy' };
+    grid.innerHTML = filtered.map(f => `
+      <div class="facility-card">
+        <div class="card-img">🏛</div>
+        <div class="card-content">
+          <h3>${Utils.escape(f.name)}</h3>
+          <p>${Utils.escape(f.description || '')}</p>
+          <p><strong>📍</strong> ${Utils.escape(f.location || '')} &bull; ${Utils.escape(f.campus || '')}</p>
+          <p>⏰ ${Utils.escape(f.openingTimes || 'Hours not listed')}</p>
+          <div class="card-meta">
+            <span><span class="status-dot ${statusDot[f.status]}"></span>${f.status}</span>
+            ${Auth.isAdmin() ? `
+              <button class="btn btn-sm btn-outline" onclick="editFacility(${f.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteFacility(${f.id})">Delete</button>
+              <select class="form-control" style="padding:0.25rem;font-size:0.8rem;width:auto" onchange="updateStatus(${f.id}, this.value)">
+                <option value="">Set Status</option>
+                <option value="OPEN">Open</option>
+                <option value="CLOSED">Closed</option>
+                <option value="BUSY">Busy</option>
+              </select>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Add Facility';
+    document.getElementById('facility-id').value = '';
+    ['fac-name','fac-desc','fac-location','fac-times'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fac-status').value = 'OPEN';
+    document.getElementById('facility-modal').classList.remove('hidden');
+  }
+
+  function editFacility(id) {
+    const f = allFacilities.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById('modal-title').textContent = 'Edit Facility';
+    document.getElementById('facility-id').value = f.id;
+    document.getElementById('fac-name').value = f.name || '';
+    document.getElementById('fac-desc').value = f.description || '';
+    document.getElementById('fac-campus').value = f.campus || 'City Campus';
+    document.getElementById('fac-status').value = f.status || 'OPEN';
+    document.getElementById('fac-location').value = f.location || '';
+    document.getElementById('fac-times').value = f.openingTimes || '';
+    document.getElementById('facility-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('facility-modal').classList.add('hidden');
+  }
+
+  async function saveFacility() {
+    const id = document.getElementById('facility-id').value;
+    const body = {
+      name: document.getElementById('fac-name').value,
+      description: document.getElementById('fac-desc').value,
+      campus: document.getElementById('fac-campus').value,
+      status: document.getElementById('fac-status').value,
+      location: document.getElementById('fac-location').value,
+      openingTimes: document.getElementById('fac-times').value
+    };
+    try {
+      if (id) {
+        await Http.put('/admin/facilities/' + id, body);
+        Toast.success('Facility updated.');
+      } else {
+        await Http.post('/admin/facilities', body);
+        Toast.success('Facility added.');
+      }
+      closeModal();
+      loadFacilities();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteFacility(id) {
+    if (!confirm('Delete this facility?')) return;
+    try {
+      await Http.delete('/admin/facilities/' + id);
+      Toast.success('Facility deleted.');
+      loadFacilities();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function updateStatus(id, status) {
+    if (!status) return;
+    try {
+      await Http.patch('/admin/facilities/' + id + '/status', { status });
+      Toast.success('Status updated.');
+      loadFacilities();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  loadFacilities();
+</script>
+</body>
+</html>

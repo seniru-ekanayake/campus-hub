@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Campus Hub | University of Wolverhampton</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div id="page-content" class="animate-in">
+
+    <!-- Hero Banner -->
+    <div class="hero-banner" id="hero-banner">
+      <div class="hero-text">
+        <div class="hero-tag">
+          <span class="pulse-dot"></span>
+          Campus Hub
+        </div>
+        <div class="hero-title" id="hero-title">Welcome back!</div>
+        <div class="hero-sub">Stay connected with everything happening at the University of Wolverhampton.</div>
+        <div class="hero-actions">
+          <a href="checkin.html" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,11 12,14 22,4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Check In
+          </a>
+          <a href="events.html" class="btn btn-ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            View Events
+          </a>
+        </div>
+      </div>
+      <div class="hero-diamond" aria-hidden="true">
+        <div class="diamond-shape"></div>
+      </div>
+    </div>
+
+    <!-- Stat Grid -->
+    <div class="stat-grid" id="stat-grid">
+
+      <div class="stat-card" data-color="yellow">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        </div>
+        <div class="stat-number" id="stat-points" data-target="0">0</div>
+        <div class="stat-label">Engagement Points</div>
+      </div>
+
+      <div class="stat-card" data-color="cyan">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-number" id="stat-clubs" data-target="0">0</div>
+        <div class="stat-label">My Clubs</div>
+      </div>
+
+      <div class="stat-card" data-color="green">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,11 12,14 22,4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="stat-number" id="stat-checkins" data-target="0">0</div>
+        <div class="stat-label">Check-ins</div>
+      </div>
+
+      <div class="stat-card" data-color="pink">
+        <div class="stat-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <div class="stat-number" id="stat-sessions" data-target="0">0</div>
+        <div class="stat-label">Sessions Booked</div>
+      </div>
+
+    </div>
+
+    <!-- Content Grid -->
+    <div class="card-grid" style="margin-bottom:16px">
+
+      <!-- Announcements -->
+      <div class="card">
+        <div class="card-header">
+          <h3 style="display:flex;align-items:center;gap:8px;font-size:15px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+            Latest Announcements
+          </h3>
+          <a href="announcements.html" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body" id="dash-announcements">
+          <div style="padding:12px 0;border-bottom:1px solid rgba(77,81,104,0.08)">
+            <div class="skeleton skeleton-text w-80" style="margin-bottom:6px"></div>
+            <div class="skeleton skeleton-text w-60"></div>
+            <div class="skeleton skeleton-text w-40" style="height:11px;margin-top:6px"></div>
+          </div>
+          <div style="padding:12px 0">
+            <div class="skeleton skeleton-text w-80" style="margin-bottom:6px"></div>
+            <div class="skeleton skeleton-text w-60"></div>
+            <div class="skeleton skeleton-text w-40" style="height:11px;margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Events -->
+      <div class="card">
+        <div class="card-header">
+          <h3 style="display:flex;align-items:center;gap:8px;font-size:15px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Upcoming Events
+          </h3>
+          <a href="events.html" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body" id="dash-events">
+          <div style="padding:12px 0;border-bottom:1px solid rgba(77,81,104,0.08);display:flex;justify-content:space-between;gap:12px">
+            <div style="flex:1"><div class="skeleton skeleton-text w-80" style="margin-bottom:6px"></div><div class="skeleton skeleton-text w-60" style="height:11px"></div></div>
+            <div class="skeleton skeleton-badge" style="flex-shrink:0"></div>
+          </div>
+          <div style="padding:12px 0;display:flex;justify-content:space-between;gap:12px">
+            <div style="flex:1"><div class="skeleton skeleton-text w-80" style="margin-bottom:6px"></div><div class="skeleton skeleton-text w-60" style="height:11px"></div></div>
+            <div class="skeleton skeleton-badge" style="flex-shrink:0"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="display:flex;align-items:center;gap:8px;font-size:15px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>
+          Quick Actions
+        </h3>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <a href="checkin.html" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9,11 12,14 22,4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Check In
+          </a>
+          <a href="clubs.html" class="btn btn-navy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Browse Clubs
+          </a>
+          <a href="transport.html" class="btn btn-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            Transport Info
+          </a>
+          <a href="mental-health.html" class="btn btn-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Book Counseling
+          </a>
+          <a href="facilities.html" class="btn btn-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+            Facilities
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error('Not logged in');
+  renderLayout('dashboard');
+
+  function emptyState(container, message, subtext) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="empty-title">${message}</div>
+        ${subtext ? `<div class="empty-sub">${subtext}</div>` : ''}
+      </div>`;
+  }
+
+  function errorState(container, retryFn) {
+    container.innerHTML = `
+      <div class="error-state">
+        <div class="error-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="empty-title" style="font-size:14px">Could not load data</div>
+        <button class="btn btn-outline btn-sm" onclick="loadDashboard()">Try again</button>
+      </div>`;
+  }
+
+  async function loadDashboard() {
+    const user = Auth.getUser();
+
+    // Hero greeting
+    if (user) {
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('hero-title').textContent = `${greeting}, ${user.firstName || user.username}!`;
+    }
+
+    // Stats - update value and data-target so count-up works
+    const setStatEl = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) { el.dataset.target = value; el.textContent = value; }
+    };
+
+    try { const p = await Http.get('/auth/profile');      setStatEl('stat-points',   p.engagementPoints || 0); } catch {}
+    try { const c = await Http.get('/clubs/my');          setStatEl('stat-clubs',    c.length); } catch {}
+    try { const k = await Http.get('/checkin/my');        setStatEl('stat-checkins', k.length); } catch {}
+    try { const s = await Http.get('/counseling/sessions/my'); setStatEl('stat-sessions', s.length); } catch {}
+
+    // Announcements
+    const annEl = document.getElementById('dash-announcements');
+    try {
+      const ann = await Http.get('/announcements');
+      if (!ann.length) { emptyState(annEl, 'No announcements yet', 'Check back soon for updates.'); return; }
+      annEl.innerHTML = ann.slice(0, 4).map(a => `
+        <div class="announcement-item ${a.pinned ? 'pinned' : ''}">
+          ${a.pinned ? '<span class="badge badge-navy" style="float:right">Pinned</span>' : ''}
+          <h4>${Utils.escape(a.title)}</h4>
+          <p style="font-size:13px;color:var(--muted);margin:4px 0 0;line-height:1.5">
+            ${Utils.escape(a.content.substring(0, 100))}${a.content.length > 100 ? '…' : ''}
+          </p>
+          <div class="meta">${Utils.timeAgo(a.createdAt)} &bull; ${a.category || 'General'}</div>
+        </div>`).join('');
+    } catch { errorState(annEl); }
+
+    // Events
+    const evEl = document.getElementById('dash-events');
+    try {
+      const events = await Http.get('/events');
+      if (!events.length) { emptyState(evEl, 'No upcoming events', 'New events will appear here when published.'); return; }
+      evEl.innerHTML = events.slice(0, 4).map(ev => `
+        <div style="padding:12px 0;border-bottom:1px solid rgba(77,81,104,0.08)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="min-width:0">
+              <div style="font-weight:600;font-size:13.5px;color:var(--navy);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Utils.escape(ev.title)}</div>
+              <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                ${Utils.formatDateTime(ev.eventDate)}
+              </div>
+            </div>
+            ${ev.campus ? `<span class="badge badge-navy" style="flex-shrink:0">${ev.campus}</span>` : ''}
+          </div>
+        </div>`).join('');
+    } catch { errorState(evEl); }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

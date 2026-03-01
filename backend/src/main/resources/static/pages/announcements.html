@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>📢 Announcements & News</h1>
+        <p class="text-muted">Stay up to date with university news, announcements and student union updates</p>
+      </div>
+      <div id="admin-controls" class="hidden">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Post Announcement</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="filterCategory('', this)">All</button>
+      <button class="tab-btn" onclick="filterCategory('ANNOUNCEMENT', this)">Announcements</button>
+      <button class="tab-btn" onclick="filterCategory('NEWS', this)">News</button>
+      <button class="tab-btn" onclick="filterCategory('UNION_NEWS', this)">Union News</button>
+    </div>
+
+    <div id="announcements-list"></div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="ann-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Post Announcement</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ann-id">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" id="ann-title" class="form-control">
+      </div>
+      <div class="form-group">
+        <label>Content *</label>
+        <textarea id="ann-content" class="form-control" style="min-height:140px"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="ann-cat" class="form-control">
+            <option value="ANNOUNCEMENT">Announcement</option>
+            <option value="NEWS">News</option>
+            <option value="UNION_NEWS">Union News</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
+            <input type="checkbox" id="ann-pinned"> Pin to top
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAnnouncement()">Post</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('announcements');
+  if (Auth.isAdmin()) document.getElementById('admin-controls').classList.remove('hidden');
+
+  let allAnnouncements = [];
+
+  async function loadAnnouncements() {
+    const list = document.getElementById('announcements-list');
+    Utils.loading(list);
+    try {
+      allAnnouncements = await Http.get('/announcements');
+      renderAnnouncements(allAnnouncements);
+    } catch { list.innerHTML = '<p class="text-muted">Could not load announcements.</p>'; }
+  }
+
+  function renderAnnouncements(items) {
+    const list = document.getElementById('announcements-list');
+    if (!items.length) { Utils.empty(list, 'No announcements yet.', '📢'); return; }
+    list.innerHTML = items.map(a => `
+      <div class="announcement-item ${a.pinned ? 'pinned' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">
+              ${a.pinned ? '<span class="badge badge-navy">📌 Pinned</span>' : ''}
+              ${a.category ? `<span class="badge badge-info">${a.category.replace('_',' ')}</span>` : ''}
+            </div>
+            <h3>${Utils.escape(a.title)}</h3>
+            <p style="margin-top:0.4rem;white-space:pre-line">${Utils.escape(a.content)}</p>
+            <div class="meta">${Utils.timeAgo(a.createdAt)} &bull; ${a.authorUsername || 'Admin'}</div>
+          </div>
+          ${Auth.isAdmin() ? `
+            <div style="display:flex;gap:0.5rem;flex-shrink:0">
+              <button class="btn btn-sm btn-outline" onclick="editAnn(${a.id})">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAnn(${a.id})">Delete</button>
+            </div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  function filterCategory(cat, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (!cat) { renderAnnouncements(allAnnouncements); return; }
+    renderAnnouncements(allAnnouncements.filter(a => a.category === cat));
+  }
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Post Announcement';
+    document.getElementById('ann-id').value = '';
+    ['ann-title','ann-content'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ann-cat').value = 'ANNOUNCEMENT';
+    document.getElementById('ann-pinned').checked = false;
+    document.getElementById('ann-modal').classList.remove('hidden');
+  }
+
+  function editAnn(id) {
+    const a = allAnnouncements.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('modal-title').textContent = 'Edit Announcement';
+    document.getElementById('ann-id').value = a.id;
+    document.getElementById('ann-title').value = a.title || '';
+    document.getElementById('ann-content').value = a.content || '';
+    document.getElementById('ann-cat').value = a.category || 'ANNOUNCEMENT';
+    document.getElementById('ann-pinned').checked = a.pinned;
+    document.getElementById('ann-modal').classList.remove('hidden');
+  }
+
+  function closeModal() { document.getElementById('ann-modal').classList.add('hidden'); }
+
+  async function saveAnnouncement() {
+    const id = document.getElementById('ann-id').value;
+    const body = {
+      title: document.getElementById('ann-title').value,
+      content: document.getElementById('ann-content').value,
+      category: document.getElementById('ann-cat').value,
+      pinned: document.getElementById('ann-pinned').checked
+    };
+    try {
+      if (id) { await Http.put('/admin/announcements/' + id, body); Toast.success('Updated.'); }
+      else { await Http.post('/admin/announcements', body); Toast.success('Posted.'); }
+      closeModal(); loadAnnouncements();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteAnn(id) {
+    if (!confirm('Delete this announcement?')) return;
+    try { await Http.delete('/admin/announcements/' + id); Toast.success('Deleted.'); loadAnnouncements(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  loadAnnouncements();
+</script>
+</body>
+</html>

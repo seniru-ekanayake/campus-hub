@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Wellbeing – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>💚 Student Wellbeing</h1>
+        <p class="text-muted">Confidential counseling support for University of Wolverhampton students</p>
+      </div>
+      <div id="admin-controls" class="hidden">
+        <button class="btn btn-primary" onclick="openCounselorModal()">+ Add Counselor</button>
+      </div>
+    </div>
+
+    <!-- Confidentiality notice -->
+    <div class="alert alert-info mb-2">
+      <strong>🔒 Confidential:</strong> All counseling sessions are strictly confidential. Only you and the counselor can view booking details.
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('counselors', this)">Available Counselors</button>
+      <button class="tab-btn" onclick="switchTab('sessions', this)">My Sessions</button>
+      <button class="tab-btn admin-tab hidden" onclick="switchTab('admin-sessions', this)">All Sessions (Admin)</button>
+    </div>
+
+    <div id="tab-counselors">
+      <div class="card-grid" id="counselors-grid"></div>
+    </div>
+    <div id="tab-sessions" class="hidden">
+      <div id="sessions-list"></div>
+    </div>
+    <div id="tab-admin-sessions" class="hidden">
+      <div id="admin-sessions-list"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Book Session Modal -->
+<div class="modal-overlay hidden" id="booking-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Book a Counseling Session</h3>
+      <button class="modal-close" onclick="document.getElementById('booking-modal').classList.add('hidden')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="book-counselor-id">
+      <div class="form-group">
+        <label>Counselor</label>
+        <input type="text" id="book-counselor-name" class="form-control" readonly style="background:var(--light-bg)">
+      </div>
+      <div class="form-group">
+        <label>Preferred Date & Time *</label>
+        <input type="datetime-local" id="book-date" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label>Issue Description (Optional)</label>
+        <textarea id="book-issue" class="form-control" placeholder="Briefly describe what you'd like to discuss (optional — this is confidential)"></textarea>
+      </div>
+      <p class="text-muted" style="font-size:0.8rem">Your booking details are kept strictly confidential.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('booking-modal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="bookSession()">Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Counselor Modal -->
+<div class="modal-overlay hidden" id="counselor-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="counselor-modal-title">Add Counselor</h3>
+      <button class="modal-close" onclick="document.getElementById('counselor-modal').classList.add('hidden')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="c-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="c-name" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="c-title" class="form-control" placeholder="Senior Counselor">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Specializations</label>
+        <input type="text" id="c-spec" class="form-control" placeholder="Anxiety, Depression, Academic Stress">
+      </div>
+      <div class="form-group">
+        <label>Bio</label>
+        <textarea id="c-bio" class="form-control"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Contact Email</label>
+          <input type="email" id="c-email" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Availability Notes</label>
+          <input type="text" id="c-avail" class="form-control" placeholder="Mon-Thu, 9am-5pm">
+        </div>
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="c-active" checked style="margin-right:0.4rem"> Active</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="document.getElementById('counselor-modal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCounselor()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('mental-health');
+  if (Auth.isAdmin()) {
+    document.getElementById('admin-controls').classList.remove('hidden');
+    document.querySelector('.admin-tab').classList.remove('hidden');
+  }
+
+  let allCounselors = [];
+
+  async function loadCounselors() {
+    const grid = document.getElementById('counselors-grid');
+    Utils.loading(grid);
+    try {
+      allCounselors = await Http.get('/counseling/counselors');
+      if (!allCounselors.length) { Utils.empty(grid, 'No counselors available.', '💚'); return; }
+      renderCounselors(allCounselors);
+    } catch { grid.innerHTML = '<p class="text-muted">Could not load counselors.</p>'; }
+  }
+
+  function renderCounselors(list) {
+    const grid = document.getElementById('counselors-grid');
+    grid.innerHTML = list.map(c => `
+      <div class="counselor-card" style="flex-direction:column">
+        <div style="display:flex;gap:1rem;align-items:flex-start">
+          <div class="counselor-avatar">${Utils.escape(c.name.charAt(0))}</div>
+          <div style="flex:1">
+            <h3 style="margin-bottom:0.2rem">${Utils.escape(c.name)}</h3>
+            <p class="text-muted">${Utils.escape(c.title || '')}</p>
+          </div>
+        </div>
+        ${c.specializations ? `<p style="margin-top:0.5rem"><strong>Specializations:</strong> ${Utils.escape(c.specializations)}</p>` : ''}
+        ${c.bio ? `<p class="text-muted" style="margin-top:0.5rem">${Utils.escape(c.bio)}</p>` : ''}
+        ${c.availabilityNotes ? `<p><strong>Available:</strong> ${Utils.escape(c.availabilityNotes)}</p>` : ''}
+        <div class="card-meta mt-1">
+          <button class="btn btn-success btn-sm" onclick="openBookingModal(${c.id}, '${Utils.escape(c.name)}')">📅 Book Session</button>
+          ${Auth.isAdmin() ? `
+            <button class="btn btn-sm btn-outline" onclick="editCounselor(${c.id})">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteCounselor(${c.id})">Remove</button>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  function openBookingModal(counselorId, counselorName) {
+    document.getElementById('book-counselor-id').value = counselorId;
+    document.getElementById('book-counselor-name').value = counselorName;
+    document.getElementById('book-issue').value = '';
+    document.getElementById('book-date').value = '';
+    document.getElementById('booking-modal').classList.remove('hidden');
+  }
+
+  async function bookSession() {
+    const counselorId = document.getElementById('book-counselor-id').value;
+    const sessionDate = document.getElementById('book-date').value;
+    const issue = document.getElementById('book-issue').value;
+
+    if (!sessionDate) { Toast.error('Please select a date and time.'); return; }
+
+    try {
+      await Http.post('/counseling/sessions', {
+        counselorId: parseInt(counselorId),
+        sessionDate: sessionDate,
+        issueDescription: issue
+      });
+      Toast.success('Session booked successfully!');
+      document.getElementById('booking-modal').classList.add('hidden');
+      loadMySessions();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function loadMySessions() {
+    const list = document.getElementById('sessions-list');
+    Utils.loading(list);
+    try {
+      const sessions = await Http.get('/counseling/sessions/my');
+      if (!sessions.length) { Utils.empty(list, 'No sessions booked.', '📅'); return; }
+      list.innerHTML = `
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Counselor</th><th>Date & Time</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody>
+                ${sessions.map(s => `
+                  <tr>
+                    <td><strong>${Utils.escape(s.counselorName)}</strong><br><span class="text-muted">${Utils.escape(s.counselorTitle || '')}</span></td>
+                    <td>${Utils.formatDateTime(s.sessionDate)}</td>
+                    <td>${Utils.statusBadge(s.status)}</td>
+                    <td>
+                      ${s.status === 'PENDING' || s.status === 'CONFIRMED'
+                        ? `<button class="btn btn-sm btn-danger" onclick="cancelSession(${s.id})">Cancel</button>`
+                        : '<span class="text-muted">—</span>'}
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    } catch { list.innerHTML = '<p class="text-muted">Could not load sessions.</p>'; }
+  }
+
+  async function cancelSession(id) {
+    if (!confirm('Cancel this counseling session?')) return;
+    try {
+      await Http.patch('/counseling/sessions/' + id + '/cancel', {});
+      Toast.success('Session cancelled.');
+      loadMySessions();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function loadAdminSessions() {
+    const list = document.getElementById('admin-sessions-list');
+    Utils.loading(list);
+    try {
+      const sessions = await Http.get('/admin/counseling/sessions');
+      if (!sessions.length) { Utils.empty(list, 'No sessions.', '📅'); return; }
+      list.innerHTML = `
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Student</th><th>Counselor</th><th>Date</th><th>Status</th><th>Update</th></tr></thead>
+              <tbody>
+                ${sessions.map(s => `
+                  <tr>
+                    <td>${Utils.escape(s.studentUsername)}</td>
+                    <td>${Utils.escape(s.counselorName)}</td>
+                    <td>${Utils.formatDateTime(s.sessionDate)}</td>
+                    <td>${Utils.statusBadge(s.status)}</td>
+                    <td>
+                      <select class="form-control" style="padding:0.25rem;font-size:0.8rem;width:auto" onchange="updateSessionStatus(${s.id}, this.value)">
+                        <option value="">Set Status</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                      </select>
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    } catch { list.innerHTML = '<p class="text-muted">Could not load sessions.</p>'; }
+  }
+
+  async function updateSessionStatus(id, status) {
+    if (!status) return;
+    try {
+      await Http.patch('/admin/counseling/sessions/' + id + '/status', { status });
+      Toast.success('Status updated.');
+      loadAdminSessions();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  function openCounselorModal() {
+    document.getElementById('counselor-modal-title').textContent = 'Add Counselor';
+    document.getElementById('c-id').value = '';
+    ['c-name','c-title','c-spec','c-bio','c-email','c-avail'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('c-active').checked = true;
+    document.getElementById('counselor-modal').classList.remove('hidden');
+  }
+
+  function editCounselor(id) {
+    const c = allCounselors.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('counselor-modal-title').textContent = 'Edit Counselor';
+    document.getElementById('c-id').value = c.id;
+    document.getElementById('c-name').value = c.name || '';
+    document.getElementById('c-title').value = c.title || '';
+    document.getElementById('c-spec').value = c.specializations || '';
+    document.getElementById('c-bio').value = c.bio || '';
+    document.getElementById('c-email').value = c.contactEmail || '';
+    document.getElementById('c-avail').value = c.availabilityNotes || '';
+    document.getElementById('c-active').checked = c.active;
+    document.getElementById('counselor-modal').classList.remove('hidden');
+  }
+
+  async function saveCounselor() {
+    const id = document.getElementById('c-id').value;
+    const body = {
+      name: document.getElementById('c-name').value,
+      title: document.getElementById('c-title').value,
+      specializations: document.getElementById('c-spec').value,
+      bio: document.getElementById('c-bio').value,
+      contactEmail: document.getElementById('c-email').value,
+      availabilityNotes: document.getElementById('c-avail').value,
+      active: document.getElementById('c-active').checked
+    };
+    try {
+      const ep = id ? '/admin/counseling/counselors/' + id : '/admin/counseling/counselors';
+      const method = id ? Http.put : Http.post;
+      await method(ep, body);
+      Toast.success(id ? 'Counselor updated.' : 'Counselor added.');
+      document.getElementById('counselor-modal').classList.add('hidden');
+      loadCounselors();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteCounselor(id) {
+    if (!confirm('Remove this counselor?')) return;
+    try { await Http.delete('/admin/counseling/counselors/' + id); Toast.success('Removed.'); loadCounselors(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-counselors').classList.toggle('hidden', tab !== 'counselors');
+    document.getElementById('tab-sessions').classList.toggle('hidden', tab !== 'sessions');
+    document.getElementById('tab-admin-sessions').classList.toggle('hidden', tab !== 'admin-sessions');
+
+    if (tab === 'sessions') loadMySessions();
+    if (tab === 'admin-sessions') loadAdminSessions();
+  }
+
+  loadCounselors();
+</script>
+</body>
+</html>

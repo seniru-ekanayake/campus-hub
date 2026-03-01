@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transport – Campus Hub</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main class="page-content">
+  <div class="animate-in">
+    <div class="page-header">
+      <div>
+        <h1>🚌 Campus Transport</h1>
+        <p class="text-muted">Inter-campus shuttle schedules and travel information</p>
+      </div>
+      <div id="admin-controls" class="hidden">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Schedule</button>
+      </div>
+    </div>
+
+    <!-- Campus map info -->
+    <div class="card mb-2">
+      <div class="card-body">
+        <h3 style="margin-bottom:0.75rem">Campus Locations</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem">
+          <div style="padding:1rem;background:var(--light-bg);border-radius:8px">
+            <strong>🏙 City Campus</strong>
+            <p class="text-muted" style="margin-top:0.25rem">Wolverhampton City Centre, WV1 1LY</p>
+          </div>
+          <div style="padding:1rem;background:var(--light-bg);border-radius:8px">
+            <strong>🌿 Walsall Campus</strong>
+            <p class="text-muted" style="margin-top:0.25rem">Gorway Road, Walsall, WS1 3BD</p>
+          </div>
+          <div style="padding:1rem;background:var(--light-bg);border-radius:8px">
+            <strong>🏭 Telford Campus</strong>
+            <p class="text-muted" style="margin-top:0.25rem">Priorslee, Telford, TF2 9NT</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Route filter -->
+    <div class="card mb-2">
+      <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+        <div class="form-group" style="margin:0;flex:1;min-width:160px">
+          <label>From</label>
+          <select id="filter-from" class="form-control">
+            <option value="">Any Campus</option>
+            <option>City Campus</option>
+            <option>Walsall Campus</option>
+            <option>Telford Campus</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:160px">
+          <label>To</label>
+          <select id="filter-to" class="form-control">
+            <option value="">Any Campus</option>
+            <option>City Campus</option>
+            <option>Walsall Campus</option>
+            <option>Telford Campus</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="loadTransport()">Search</button>
+      </div>
+    </div>
+
+    <div id="transport-list"></div>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay hidden" id="transport-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Add Schedule</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="t-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>From Campus</label>
+          <select id="t-from" class="form-control">
+            <option>City Campus</option><option>Walsall Campus</option><option>Telford Campus</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>To Campus</label>
+          <select id="t-to" class="form-control">
+            <option>City Campus</option><option>Walsall Campus</option><option>Telford Campus</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Departure Time</label>
+          <input type="text" id="t-depart" class="form-control" placeholder="08:00">
+        </div>
+        <div class="form-group">
+          <label>Arrival Time</label>
+          <input type="text" id="t-arrive" class="form-control" placeholder="09:15">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Frequency</label>
+          <input type="text" id="t-freq" class="form-control" placeholder="Every 30 minutes">
+        </div>
+        <div class="form-group">
+          <label>Days of Operation</label>
+          <input type="text" id="t-days" class="form-control" placeholder="Mon-Fri">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Route Info</label>
+        <textarea id="t-route" class="form-control" placeholder="Via Ring Road, stops at..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Alert Message (optional)</label>
+        <input type="text" id="t-alert" class="form-control" placeholder="Any current disruptions">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="t-active" checked style="margin-right:0.4rem"> Active</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTransport()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  if (!Auth.requireLogin()) throw new Error();
+  renderLayout('transport');
+  if (Auth.isAdmin()) document.getElementById('admin-controls').classList.remove('hidden');
+
+  let allSchedules = [];
+
+  async function loadTransport() {
+    const list = document.getElementById('transport-list');
+    Utils.loading(list);
+
+    try {
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+
+      if (from && to) {
+        allSchedules = await Http.get(`/transport/route?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+      } else {
+        allSchedules = await Http.get('/transport');
+      }
+    } catch { list.innerHTML = '<p class="text-muted">Could not load schedules.</p>'; return; }
+
+    if (!allSchedules.length) { Utils.empty(list, 'No schedules found.', '🚌'); return; }
+
+    list.innerHTML = allSchedules.map(t => `
+      <div class="transport-card mb-2">
+        <div class="transport-route">
+          <span>${Utils.escape(t.fromCampus)}</span>
+          <span class="transport-arrow">→</span>
+          <span>${Utils.escape(t.toCampus)}</span>
+          ${!t.active ? '<span class="badge badge-danger" style="margin-left:auto">Inactive</span>' : ''}
+        </div>
+        ${t.alertMessage ? `<div class="alert alert-warning" style="margin:0.5rem 0;padding:0.5rem 0.75rem">⚠ ${Utils.escape(t.alertMessage)}</div>` : ''}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.5rem;margin-top:0.5rem">
+          ${t.departureTime ? `<div><strong>Departs:</strong> ${Utils.escape(t.departureTime)}</div>` : ''}
+          ${t.arrivalTime ? `<div><strong>Arrives:</strong> ${Utils.escape(t.arrivalTime)}</div>` : ''}
+          ${t.frequency ? `<div><strong>Frequency:</strong> ${Utils.escape(t.frequency)}</div>` : ''}
+          ${t.daysOfOperation ? `<div><strong>Days:</strong> ${Utils.escape(t.daysOfOperation)}</div>` : ''}
+        </div>
+        ${t.routeInfo ? `<p class="text-muted mt-1" style="font-size:0.85rem">📍 ${Utils.escape(t.routeInfo)}</p>` : ''}
+        ${Auth.isAdmin() ? `
+          <div class="card-meta mt-1">
+            <button class="btn btn-sm btn-outline" onclick="editTransport(${t.id})">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTransport(${t.id})">Delete</button>
+          </div>` : ''}
+      </div>`).join('');
+  }
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Add Schedule';
+    document.getElementById('t-id').value = '';
+    ['t-depart','t-arrive','t-freq','t-days','t-route','t-alert'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('t-active').checked = true;
+    document.getElementById('transport-modal').classList.remove('hidden');
+  }
+
+  function editTransport(id) {
+    const t = allSchedules.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('modal-title').textContent = 'Edit Schedule';
+    document.getElementById('t-id').value = t.id;
+    document.getElementById('t-from').value = t.fromCampus;
+    document.getElementById('t-to').value = t.toCampus;
+    document.getElementById('t-depart').value = t.departureTime || '';
+    document.getElementById('t-arrive').value = t.arrivalTime || '';
+    document.getElementById('t-freq').value = t.frequency || '';
+    document.getElementById('t-days').value = t.daysOfOperation || '';
+    document.getElementById('t-route').value = t.routeInfo || '';
+    document.getElementById('t-alert').value = t.alertMessage || '';
+    document.getElementById('t-active').checked = t.active;
+    document.getElementById('transport-modal').classList.remove('hidden');
+  }
+
+  function closeModal() { document.getElementById('transport-modal').classList.add('hidden'); }
+
+  async function saveTransport() {
+    const id = document.getElementById('t-id').value;
+    const body = {
+      fromCampus: document.getElementById('t-from').value,
+      toCampus: document.getElementById('t-to').value,
+      departureTime: document.getElementById('t-depart').value,
+      arrivalTime: document.getElementById('t-arrive').value,
+      frequency: document.getElementById('t-freq').value,
+      daysOfOperation: document.getElementById('t-days').value,
+      routeInfo: document.getElementById('t-route').value,
+      alertMessage: document.getElementById('t-alert').value,
+      active: document.getElementById('t-active').checked
+    };
+    try {
+      if (id) { await Http.put('/admin/transport/' + id, body); Toast.success('Updated.'); }
+      else { await Http.post('/admin/transport', body); Toast.success('Added.'); }
+      closeModal(); loadTransport();
+    } catch (e) { Toast.error(e.message); }
+  }
+
+  async function deleteTransport(id) {
+    if (!confirm('Delete this schedule?')) return;
+    try { await Http.delete('/admin/transport/' + id); Toast.success('Deleted.'); loadTransport(); }
+    catch (e) { Toast.error(e.message); }
+  }
+
+  loadTransport();
+</script>
+</body>
+</html>
