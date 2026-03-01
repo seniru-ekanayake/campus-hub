@@ -1,10 +1,9 @@
-package com.wolverhampton.campushub.config;
+package com.wolverhampton.campushub;
 
 import com.wolverhampton.campushub.entity.Role;
 import com.wolverhampton.campushub.entity.User;
 import com.wolverhampton.campushub.repository.RoleRepository;
 import com.wolverhampton.campushub.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -14,43 +13,49 @@ import java.util.Set;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public DataInitializer(RoleRepository roleRepository,
+                           UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
+        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public void run(String... args) {
-        // Create roles if not exist
-        if (roleRepository.count() == 0) {
-            Role studentRole = new Role();
-            studentRole.setName(Role.RoleName.ROLE_STUDENT);
-            roleRepository.save(studentRole);
+        // Create roles if they don't exist
+        Role studentRole = roleRepository.findByName(Role.RoleName.ROLE_STUDENT)
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName(Role.RoleName.ROLE_STUDENT);
+                    return roleRepository.save(r);
+                });
 
-            Role adminRole = new Role();
-            adminRole.setName(Role.RoleName.ROLE_ADMIN);
-            roleRepository.save(adminRole);
-        }
+        Role adminRole = roleRepository.findByName(Role.RoleName.ROLE_ADMIN)
+                .orElseGet(() -> {
+                    Role r = new Role();
+                    r.setName(Role.RoleName.ROLE_ADMIN);
+                    return roleRepository.save(r);
+                });
 
-        // Create default admin if not exist
+        // Create admin user if it doesn't exist
         if (!userRepository.existsByUsername("admin")) {
             User admin = new User();
             admin.setUsername("admin");
-            admin.setEmail("admin@wlv.ac.uk");
+            admin.setEmail("admin@campushub.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setFirstName("System");
-            admin.setLastName("Administrator");
-
-            Role adminRole = roleRepository.findByName(Role.RoleName.ROLE_ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
+            admin.setFirstName("Admin");
+            admin.setLastName("User");
+            admin.setActive(true);
             admin.setRoles(Set.of(adminRole));
             userRepository.save(admin);
-
-            System.out.println("Default admin created: admin / admin123");
+            System.out.println("✅ Admin user created: username=admin, password=admin123");
+        } else {
+            System.out.println("ℹ️ Admin user already exists, skipping.");
         }
     }
 }
