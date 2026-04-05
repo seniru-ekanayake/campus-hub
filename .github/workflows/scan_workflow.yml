@@ -1,0 +1,83 @@
+name: Security Scan & Notify
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST
+        id: semgrep
+        run: |
+          # Install Semgrep
+          python3 -m pip install semgrep
+          # Run scan and save to JSON
+          semgrep scan --config auto --json --output semgrep_results.json || true
+          
+      - name: Run Gitleaks Secret Scan
+        id: gitleaks
+        run: |
+          # Install Gitleaks
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz
+          tar -xzf gitleaks_8.18.2_linux_x64.tar.gz
+          ./gitleaks detect --source . --report-path gitleaks_results.json || true
+
+      - name: Process Results & Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          # Simple Python script to parse results and send Telegram message
+          python3 - <<EOF
+          import os, json, requests
+
+          def send_telegram_message(text, buttons=None ):
+              url = f"https://api.telegram.org/bot{os.environ["TELEGRAM_BOT_TOKEN"]}/sendMessage"
+              payload = {
+                  "chat_id": os.environ["TELEGRAM_CHAT_ID"],
+                  "text": text,
+                  "parse_mode": "Markdown",
+              }
+              if buttons:
+                  payload["reply_markup"] = {"inline_keyboard": buttons}
+              r = requests.post(url, json=payload )
+              print(f"Telegram response: {r.status_code} - {r.text}")
+
+          # Parse Semgrep results
+          with open("semgrep_results.json") as f:
+              semgrep_data = json.load(f)
+          semgrep_issues = len(semgrep_data.get("results", []))
+
+          # Parse Gitleaks results
+          gitleaks_issues = 0
+          if os.path.exists("gitleaks_results.json"):
+              with open("gitleaks_results.json") as f:
+                  gitleaks_data = json.load(f)
+                  gitleaks_issues = len(gitleaks_data)
+
+          total_issues = semgrep_issues + gitleaks_issues
+          
+          if total_issues > 0:
+              report = f"🚨 *Security Scan Report*\n\n"
+              report += f"🔍 *Semgrep SAST*: {semgrep_issues} issues found\n"
+              report += f"🔑 *Gitleaks Secrets*: {gitleaks_issues} issues found\n\n"
+              report += f"Total issues: *{total_issues}*\n\n"
+              report += "Would you like me to attempt an autonomous fix?"
+              
+              buttons = [[
+                  {"text": "✅ Approve Fix", "callback_data": f"approve_fix:{os.environ.get("GITHUB_RUN_ID")}"},
+                  {"text": "❌ Decline", "callback_data": "decline_fix"}
+              ]]
+              send_telegram_message(report, buttons)
+          else:
+              send_telegram_message("✅ *Security Scan Complete*\n\nNo issues found in the latest commit.")
+          EOF
